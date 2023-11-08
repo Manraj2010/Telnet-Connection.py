@@ -1,14 +1,13 @@
 from netmiko import ConnectHandler
 import time
-import getpass
 
 # Define the device information
 device_info = {
     'device_type': 'cisco_ios',
     'ip': '192.168.56.101',
-    'username': getpass.getpass('Enter Username: '),  # The Username is "prne"
-    'password': getpass.getpass('Enter Password: '),  # The Password is "cisco123!"
-    'secret': getpass.getpass('Enter Enable Password: '),  # Enable password
+    'username': input('Enter Username: '),  # The Username is "prne"
+    'password': input('Enter Password: '),  # The Password is "cisco123!"
+    'secret': 'class123!',  # Enable password
     'timeout': 60,  # Set a longer timeout value (adjust as needed)
 }
 
@@ -29,37 +28,17 @@ ssh_session.send_config_set(config_commands)
 # Introduce a delay for stability (optional)
 time.sleep(2)
 
-# Configure Loopback0 interface with an IP address
-loopback0_commands = [
+# Configure a loopback interface
+loopback_commands = [
     'interface Loopback0',
-    'ip address 192.168.1.1 255.255.255.255',
-    'description Loopback0 Interface',
-    'no shutdown',
+    'ip address 10.0.0.1 255.255.255.255',
 ]
-ssh_session.send_config_set(loopback0_commands)
-
-# Configure an additional interface (e.g., GigabitEthernet0/0) with an IP address
-interface_commands = [
-    'interface GigabitEthernet0/0',
-    'ip address 192.168.2.1 255.255.255.0',
-    'description LAN Interface',
-    'no shutdown',
-]
-ssh_session.send_config_set(interface_commands)
-
-# Configure OSPF
-ospf_commands = [
-    'router ospf 1',
-    'network 192.168.1.1 0.0.0.0 area 0',
-    'network 192.168.2.0 0.0.0.255 area 0',
-]
-ssh_session.send_config_set(ospf_commands)
+ssh_session.send_config_set(loopback_commands)
 
 # Configure EIGRP
 eigrp_commands = [
-    'router eigrp 100',
-    'network 192.168.1.1 0.0.0.0',
-    'network 192.168.2.1 0.0.0.0',
+    'router eigrp 100',  # Use your desired EIGRP AS number
+    'network 10.0.0.1 0.0.0.0',  # Advertise the loopback network
 ]
 ssh_session.send_config_set(eigrp_commands)
 
@@ -67,10 +46,16 @@ ssh_session.send_config_set(eigrp_commands)
 rip_commands = [
     'router rip',
     'version 2',
-    'network 192.168.1.1',
-    'network 192.168.2.1',
+    'network 192.168.1.0',
 ]
 ssh_session.send_config_set(rip_commands)
+
+# Configure OSPF
+ospf_commands = [
+    'router ospf 1',  # Use your desired OSPF process ID
+    'network 10.0.0.1 0.0.0.0 area 0',  # Advertise the loopback network in OSPF Area 0
+]
+ssh_session.send_config_set(ospf_commands)
 
 # Introduce a delay for stability (optional)
 time.sleep(2)
@@ -89,11 +74,12 @@ ssh_session.exit_enable_mode()
 # Disconnect from the device
 ssh_session.disconnect()
 
-# Display the information with messages for OSPF, RIP, and EIGRP configuration on Loopback0
+# Display the information
 print('------------------------------------------------------')
-print('{:<20} {:<15}'.format('Device IP', 'Username'))
-print('{:<20} {:<15}'.format(device_info['ip'], device_info['username']))
+print('{:<20} {:<15} {:<15}'.format('Device IP', 'Username', 'Password'))
+print('{:<20} {:<15} {:<15}'.format(device_info['ip'], device_info['username'], device_info['password']))
 print('--- Running Configuration saved to:', output_file)
 print('--- Hostname changed to:', new_hostname)
-print('--- OSPF, RIP, and EIGRP configuration on Loopback0 completed')
+print('--- Loopback and interfaces configured with EIGRP, RIP, and OSPF')
 print('------------------------------------------------------')
+
